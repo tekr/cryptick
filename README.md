@@ -62,7 +62,7 @@ minute.
 
 ```sh
 pip install esptool
-esptool.py --chip esp32c6 write_flash 0x0 cryptick-1.2.bin
+esptool.py --chip esp32c6 write_flash 0x0 cryptick-1.3.bin
 ```
 
 **Updating.** On a ticker already running cryptick, upload the firmware in
