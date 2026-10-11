@@ -28,8 +28,8 @@ TEXT = "cryptick"
 SIZE = 34              # font size, px
 WEIGHT = 600           # Quicksand's wght axis: 300-700
 SCALE = 4              # supersampling
-STAR_RADIUS = 2.0      # star size, relative to the dot it replaces
-STAR_LIFT = 0.7        # how far above the dot the star sits, in star radii
+STAR_RADIUS = 1.75     # star size, relative to the dot it replaces
+STAR_LIFT = 2.0        # how far the star's centre sits above the dot's, in dot radii
 GLOW = 0.30            # a soft halo round the star, as a fraction of its brightness
 STAR_CURVE = 2.6       # 2 is a diamond; higher pinches the sides into a sparkle
 STAR_STRETCH = 1.18    # the vertical points a little longer than the horizontal
@@ -66,18 +66,22 @@ def render_logo(ttf):
     font.set_variation_by_axes([WEIGHT])
     w, h = font.getbbox(TEXT)[2] * 2, SIZE * SCALE * 3
 
-    # The dot is the ink of the final i above where a dotless i's stem
-    # begins; the star goes in its place.
-    dotless = render(font, TEXT[:-1] + "ı", (w, h))
+    # The dot is the ink the i has and a dotless i does not, above where
+    # the stem begins, within the i's own advance; the star goes in its place.
+    k = TEXT.index("i")
+    dotless = render(font, TEXT[:k] + "ı" + TEXT[k + 1:], (w, h))
     dotted = render(font, TEXT, (w, h))
     stem_top = render(font, "ı", (w, h)).getbbox()[1]
-    i_left = render(font, TEXT[:-1], (w, h)).getbbox()[2]
-    dot = dotted.crop((i_left, 0, w, stem_top - SCALE)).getbbox()
+    i_left = int(w // 8 + font.getlength(TEXT[:k]))
+    i_right = int(math.ceil(w // 8 + font.getlength(TEXT[:k + 1])))
+    region = (i_left, 0, i_right, stem_top - SCALE)
+    dot = ImageChops.subtract(dotted.crop(region), dotless.crop(region)).getbbox()
     if dot is None:
         sys.exit("could not find the dot of the i")
     dot = (dot[0] + i_left, dot[1], dot[2] + i_left, dot[3])
-    r = (dot[2] - dot[0]) / 2 * STAR_RADIUS
-    cx, cy = (dot[0] + dot[2]) / 2, (dot[1] + dot[3]) / 2 - r * STAR_LIFT
+    dot_r = (dot[2] - dot[0]) / 2
+    r = dot_r * STAR_RADIUS
+    cx, cy = (dot[0] + dot[2]) / 2, (dot[1] + dot[3]) / 2 - dot_r * STAR_LIFT
 
     text = dotless
     sparkle = star((w, h), cx, cy, r)
